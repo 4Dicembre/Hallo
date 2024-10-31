@@ -130,3 +130,16 @@ document.getElementById('generate-button').addEventListener('click', async () =>
         }
     }
 });
+
+// Funzione per condividere su WhatsApp
+document.getElementById('share-whatsapp').addEventListener('click', () => {
+    const promptText = document.getElementById('prompt-text').textContent;
+    const imageUrl = document.querySelector('#image-container img')?.src;
+
+    if (promptText && imageUrl) {
+        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(promptText)}%0A${encodeURIComponent(imageUrl)}`;
+        window.open(whatsappUrl, '_blank');
+    } else {
+        alert('Genera un\'immagine prima di condividerla.');
+    }
+});
