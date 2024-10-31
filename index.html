@@ -12,9 +12,10 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             height: 100vh;
             margin: 0;
+            padding: 20px;
         }
 
         h1 {
@@ -29,6 +30,7 @@
             font-size: 16px;
             cursor: pointer;
             transition: background-color 0.3s, color 0.3s;
+            margin-bottom: 20px; /* Aggiunto margine inferiore */
         }
 
         button:hover {
@@ -44,8 +46,10 @@
 
         #image-container {
             margin-top: 20px;
+            margin-bottom: 20px; /* Aggiunto margine inferiore */
             max-width: 100%;
             text-align: center;
+            position: relative;
         }
 
         img {
@@ -89,6 +93,17 @@
                 left: 100%;
                 width: 0;
             }
+        }
+
+        .watermark {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 2px 5px;
+            border-radius: 3px;
         }
     </style>
 </head>
