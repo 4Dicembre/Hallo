@@ -47,7 +47,6 @@ const prompts = [
     " qualcuno che si iscrive in palestra e la prima volta prende l’ascensore invece delle scale."
 
 ];
-
 // Funzione per generare un GUID
 function generateGUID() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -80,16 +79,64 @@ async function saveImageCache(imageCache) {
     }
 }
 
+// Funzione per caricare l'immagine su Imgur
+async function uploadImageToImgur(imageBlob) {
+    const formData = new FormData();
+    formData.append('image', imageBlob);
+
+    const response = await fetch('https://api.imgur.com/3/image', {
+        method: 'POST',
+        headers: {
+            Authorization: 'Client-ID IMGUR_CLIENT_ID' // Sostituisci con il tuo Client ID di Imgur
+        },
+        body: formData
+    });
+
+    const data = await response.json();
+    return data.data.link;
+}
+
+// Funzione per aggiungere il watermark all'immagine
+function addWatermark(imageUrl) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.src = imageUrl;
+
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = img.width;
+            canvas.height = img.height;
+
+            ctx.drawImage(img, 0, 0);
+            ctx.font = '20px Arial';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.fillText('Hallo', img.width - 70, img.height - 20);
+
+            canvas.toBlob(blob => {
+                resolve(blob);
+            }, 'image/png');
+        };
+
+        img.onerror = (error) => {
+            reject(error);
+        };
+    });
+}
+
 document.getElementById('generate-button').addEventListener('click', async () => {
     const randomPrompt = prompts[Math.floor(Math.random() * prompts.length)];
     const loadingBar = document.getElementById('loading-bar');
     const imageContainer = document.getElementById('image-container');
     const promptText = document.getElementById('prompt-text');
+    const shareButtons = document.querySelector('.share-buttons');
 
     // Mostra la barra di caricamento e il prompt scelto
     loadingBar.style.display = 'block';
     promptText.textContent = `Prompt: ${randomPrompt}`;
     imageContainer.innerHTML = '';
+    shareButtons.style.display = 'none'; // Nascondi i pulsanti di condivisione
 
     // Carica la cache delle immagini
     const imageCache = await loadImageCache();
@@ -103,6 +150,7 @@ document.getElementById('generate-button').addEventListener('click', async () =>
         const cachedImageUrl = imageCache[promptGUID];
         loadingBar.style.display = 'none';
         imageContainer.innerHTML = `<img src="${cachedImageUrl}" alt="Immagine generata" /><div class="watermark">Hallo</div>`;
+        shareButtons.style.display = 'block'; // Mostra i pulsanti di condivisione
     } else {
         // Genera una nuova immagine chiamando l'API
         try {
@@ -114,14 +162,21 @@ document.getElementById('generate-button').addEventListener('click', async () =>
             const data = await response.json();
             const imageUrl = data.image_url;
 
+            // Aggiungi il watermark all'immagine
+            const imageBlob = await addWatermark(imageUrl);
+
+            // Carica l'immagine con il watermark su Imgur
+            const uploadedImageUrl = await uploadImageToImgur(imageBlob);
+
             // Nascondi la barra di caricamento
             loadingBar.style.display = 'none';
 
             // Mostra l'immagine generata con il watermark
-            imageContainer.innerHTML = `<img src="${imageUrl}" alt="Immagine generata" /><div class="watermark">Hallo</div>`;
+            imageContainer.innerHTML = `<img src="${uploadedImageUrl}" alt="Immagine generata" /><div class="watermark">Hallo</div>`;
+            shareButtons.style.display = 'block'; // Mostra i pulsanti di condivisione
 
             // Aggiungi l'immagine alla cache
-            imageCache[promptGUID] = imageUrl;
+            imageCache[promptGUID] = uploadedImageUrl;
             await saveImageCache(imageCache);
         } catch (error) {
             console.error('Errore nella generazione dell\'immagine:', error);
@@ -132,7 +187,7 @@ document.getElementById('generate-button').addEventListener('click', async () =>
 });
 
 // Funzione per condividere su WhatsApp
-document.getElementById('share-whatsapp').addEventListener('click', () => {
+document.getElementById('share-whatsapp').addEventListener('click', async () => {
     const promptText = document.getElementById('prompt-text').textContent;
     const imageUrl = document.querySelector('#image-container img')?.src;
 
