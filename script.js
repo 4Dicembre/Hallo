@@ -187,7 +187,7 @@ document.getElementById('generate-button').addEventListener('click', async () =>
 });
 
 // Funzione per condividere su WhatsApp
-document.getElementById('share-whatsapp').addEventListener('click', async () => {
+document.getElementById('share-whatsapp').addEventListener('click', () => {
     const promptText = document.getElementById('prompt-text').textContent;
     const imageUrl = document.querySelector('#image-container img')?.src;
 
